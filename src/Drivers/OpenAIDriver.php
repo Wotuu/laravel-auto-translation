@@ -94,6 +94,7 @@ You are a helpful assistant that translates text from {$sourceLang} to {$targetL
     - Return the output as a valid JSON object where:
         - The keys remain unchanged.
         - The values are properly translated.
+        - Do not wrap the output in markdown or HTML tags. 
 EOL
             ],
             [
@@ -124,6 +125,8 @@ EOL
         }
 
         $content = $response->json()['choices'][0]['message']['content'] ?? '';
+        // Strip any potential markdown or HTML tags (even though we asked them to remove them - be sure)
+        $content = str_replace(['```json', '```'], '', $content);
         if (! json_validate($content)) {
             throw new Exception('Invalid JSON returned by OpenAI: '.json_last_error_msg());
         }

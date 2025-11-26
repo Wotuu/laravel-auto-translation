@@ -105,6 +105,9 @@ subsequent translations.
 php artisan translate:scan --lang=en
 ~~~
 
+- `lang` (Optional) – Source language code (defaults to config value) (e.g., `fr`).
+- `--exclude-files` (Optional) – Comma-separated value list of file names to exclude from scanning inside the language folder if you don't want to translate them; defaults to having no exclusions.
+
 ### 2. `translate:default`
 
 This command translates the strings defined in `texts_to_translate.json` into a specified target language using the

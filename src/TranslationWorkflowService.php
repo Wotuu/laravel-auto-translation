@@ -25,9 +25,9 @@ class TranslationWorkflowService
         return $this;
     }
 
-    public function scanLanguageFiles(string $lang): void
+    public function scanLanguageFiles(string $lang, array $excludeFiles = []): void
     {
-        $texts = $this->loadLanguageFiles($lang);
+        $texts = $this->loadLanguageFiles($lang, $excludeFiles);
         $this->storeTextsForTranslation($texts);
     }
 
@@ -106,9 +106,10 @@ class TranslationWorkflowService
      * Loads all language strings from JSON and PHP language files.
      *
      * @param  string  $lang  The language code to load.
+     * @param array $excludeFiles The list of files to exclude from loading.
      * @return array The array of loaded language strings.
      */
-    private function loadLanguageFiles(string $lang): array
+    private function loadLanguageFiles(string $lang, array $excludeFiles): array
     {
         $dir = config('auto-translations.lang_path');
         $texts = [];
@@ -124,13 +125,12 @@ class TranslationWorkflowService
         $langDir = "{$dir}/{$lang}";
         if (File::isDirectory($langDir)) {
             foreach (File::allFiles($langDir) as $file) {
-                if ($file->getExtension() === 'php') {
-                    $subKey = str_replace(['/', '.php'], ['.', ''], $file->getRelativePathname());
+                $subKey = str_replace(['/', '.php'], ['.', ''], $file->getRelativePathname());
+                if ($file->getExtension() === 'php' && !in_array($subKey, $excludeFiles)) {
                     $array = include $file->getPathname();
                     if (is_array($array)) {
                         $flattened = Arr::dot([$subKey => $array]);
                         $texts = array_merge($texts, $flattened);
-
                     }
                 }
             }
