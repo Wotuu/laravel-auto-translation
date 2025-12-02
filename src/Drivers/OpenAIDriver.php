@@ -94,7 +94,7 @@ You are a helpful assistant that translates text from {$sourceLang} to {$targetL
     - Return the output as a valid JSON object where:
         - The keys remain unchanged.
         - The values are properly translated.
-        - Do not wrap the output in markdown or HTML tags. 
+        - Do not wrap the output in markdown or HTML tags.
 EOL
             ],
             [

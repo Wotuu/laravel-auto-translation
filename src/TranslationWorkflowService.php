@@ -174,15 +174,59 @@ class TranslationWorkflowService
     {
         $file = config('auto-translations.lang_path')."/{$lang}.json";
 
-        if (!File::exists($file)) {
+        if (File::exists($file)) {
+            $existing = json_decode(File::get($file), true) ?: [];
+            foreach (array_keys($existing) as $key) {
+                unset($texts[$key]);
+            }
+
             return $texts;
         }
 
-        $existing = json_decode(File::get($file), true) ?: [];
-        foreach (array_keys($existing) as $key) {
-            unset($texts[$key]);
+        $langDir = config('auto-translations.lang_path') . "/{$lang}";
+        if (File::isDirectory($langDir)) {
+            $diff = [];
+            $undotted = Arr::undot($texts);
+            foreach ($undotted as $filename => $translations) {
+                $translationsFromFile = include sprintf('%s/%s.php', $langDir, $filename);
+
+                $diffFromFile = $this->arrayDiffKeyRecursive($translations, $translationsFromFile);
+                if (!empty($diffFromFile)) {
+                    $diff[$filename] = $diffFromFile;
+                }
+            }
+            $texts = $diff;
         }
 
+        // Check if the translations are .php file based
         return $texts;
+    }
+
+    /**
+     * Compares two arrays and recursively returns the difference.
+     *
+     * @param array $arr1
+     * @param array $arr2
+     * @return array
+     * @see https://www.php.net/manual/en/function.array-diff-key.php#112558
+     */
+    private function arrayDiffKeyRecursive(
+        array $arr1,
+        array $arr2
+    ): array {
+        $diff = array_diff_key($arr1, $arr2);
+        $intersect = array_intersect_key($arr1, $arr2);
+
+        foreach ($intersect as $k => $v) {
+            if (is_array($arr1[$k]) && is_array($arr2[$k])) {
+                $d = $this->arrayDiffKeyRecursive($arr1[$k], $arr2[$k]);
+
+                if ($d) {
+                    $diff[$k] = $d;
+                }
+            }
+        }
+
+        return $diff;
     }
 }
