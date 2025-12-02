@@ -190,12 +190,12 @@ class TranslationWorkflowService
             foreach ($undotted as $filename => $translations) {
                 $translationsFromFile = include sprintf('%s/%s.php', $langDir, $filename);
 
-                $diffFromFile = $this->arrayDiffKeyRecursive($translations, $translationsFromFile);
+                $diffFromFile = $this->getMissingOrEmptyKeys($translations, $translationsFromFile);
                 if (!empty($diffFromFile)) {
                     $diff[$filename] = $diffFromFile;
                 }
             }
-            $texts = $diff;
+            $texts = Arr::dot($diff);
         }
 
         // Check if the translations are .php file based
@@ -210,7 +210,7 @@ class TranslationWorkflowService
      * @return array
      * @see https://www.php.net/manual/en/function.array-diff-key.php#112558
      */
-    private function arrayDiffKeyRecursive(
+    private function getMissingOrEmptyKeys(
         array $arr1,
         array $arr2
     ): array {
@@ -219,11 +219,18 @@ class TranslationWorkflowService
 
         foreach ($intersect as $k => $v) {
             if (is_array($arr1[$k]) && is_array($arr2[$k])) {
-                $d = $this->arrayDiffKeyRecursive($arr1[$k], $arr2[$k]);
+                $d = $this->getMissingOrEmptyKeys($arr1[$k], $arr2[$k]);
 
                 if ($d) {
                     $diff[$k] = $d;
                 }
+
+                continue;
+            }
+
+            // Case 2: Key exists in both, but B's value is empty
+            if (empty($arr2[$k])) {
+                $diff[$k] = $arr1[$k];
             }
         }
 
